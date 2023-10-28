@@ -7,7 +7,7 @@ project(
 )
 set(CMAKE_CXX_STANDARD 20)
 find_package(Vulkan REQUIRED)
-file(GLOB SRC *.cpp)
+file(GLOB SRC src/*.cpp)
 
 add_library(VulkanMadeEasy SHARED ${SRC})
 target_link_libraries(VulkanMadeEasy PUBLIC ${Vulkan_LIBRARIES})
