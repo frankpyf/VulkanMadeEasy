@@ -10,14 +10,4 @@ namespace vme {
         VulkanCore(/* args */);
         ~VulkanCore();
     };
-    
-    VulkanCore::VulkanCore(/* args */)
-    {
-    }
-    
-    VulkanCore::~VulkanCore()
-    {
-    }
-    
-
 }
