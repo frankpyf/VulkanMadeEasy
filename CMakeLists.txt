@@ -6,8 +6,6 @@ project(
     LANGUAGES CXX
 )
 set(CMAKE_CXX_STANDARD 20)
-file(GLOB SRC src/*.cpp)
-file(GLOB HDS include/*.h)
 
 # Vulkan
 find_package(Vulkan REQUIRED)
@@ -21,17 +19,18 @@ set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 
-add_library(VulkanMadeEasy SHARED ${SRC})
-target_sources(VulkanMadeEasy
-        PRIVATE
-        FILE_SET vme_headers
-        TYPE HEADERS
-        FILES ${HDS})
+add_library(VulkanMadeEasy SHARED)
+target_sources(VulkanMadeEasy PRIVATE
+    include/VulkanEngine.h
+    include/Window.h
+    src/VulkanEngine.cpp
+    src/VulkanMemoryAllocator.cpp
+    src/Window.cpp
+)
         
 target_link_libraries(
     VulkanMadeEasy 
-    PUBLIC ${Vulkan_LIBRARIES} glfw
-    PRIVATE GPUOpen::VulkanMemoryAllocator
+    PUBLIC ${Vulkan_LIBRARIES} glfw GPUOpen::VulkanMemoryAllocator
 )
 target_include_directories(VulkanMadeEasy PUBLIC ${Vulkan_INCLUDE_DIRS})
 target_include_directories(VulkanMadeEasy PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
