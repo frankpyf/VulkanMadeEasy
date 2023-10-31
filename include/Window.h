@@ -1,5 +1,6 @@
 #pragma once
-#include "GLFW/glfw3.h"
+#define GLFW_INCLUDE_NONE
+#include <GLFW/glfw3.h>
 
 namespace vme
 {
@@ -7,10 +8,14 @@ namespace vme
     {
     private:
         /* data */
+        int width_;
+        int height_;
         GLFWwindow* window_;
     public:
         Window(int width, int height, const char* title);
-        ~Window();
+        virtual ~Window();
+        inline const int GetHeight()   const { return height_; }
+        inline const int GetWidth()    const { return width_; }
     };
     
 } // namespace vme

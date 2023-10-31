@@ -23,11 +23,6 @@ target_sources(VulkanMadeEasy
         TYPE HEADERS
         FILES ${HDS})
         
-target_link_libraries(VulkanMadeEasy 
-                            PUBLIC 
-                            ${Vulkan_LIBRARIES} 
-                            ${GLFW_LIBRARIES})
-target_include_directories(VulkanMadeEasy 
-        PUBLIC ${Vulkan_INCLUDE_DIRS}
-        PRIVATE ${CMAKE_SOURCE_DIR}/external/glfw/include)
+target_link_libraries(VulkanMadeEasy PUBLIC ${Vulkan_LIBRARIES} glfw)
+target_include_directories(VulkanMadeEasy PUBLIC ${Vulkan_INCLUDE_DIRS})
 target_include_directories(VulkanMadeEasy PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
