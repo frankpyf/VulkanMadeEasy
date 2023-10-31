@@ -6,9 +6,11 @@ project(
     LANGUAGES CXX
 )
 set(CMAKE_CXX_STANDARD 20)
-find_package(Vulkan REQUIRED)
 file(GLOB SRC src/*.cpp)
 file(GLOB HDS include/*.h)
+
+# Vulkan
+find_package(Vulkan REQUIRED)
 
 # glfw
 add_subdirectory(external/glfw)
@@ -23,6 +25,9 @@ target_sources(VulkanMadeEasy
         TYPE HEADERS
         FILES ${HDS})
         
-target_link_libraries(VulkanMadeEasy PUBLIC ${Vulkan_LIBRARIES} glfw)
+target_link_libraries(
+    VulkanMadeEasy 
+    PUBLIC ${Vulkan_LIBRARIES} glfw
+)
 target_include_directories(VulkanMadeEasy PUBLIC ${Vulkan_INCLUDE_DIRS})
 target_include_directories(VulkanMadeEasy PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
