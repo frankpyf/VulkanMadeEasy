@@ -12,6 +12,9 @@ file(GLOB HDS include/*.h)
 # Vulkan
 find_package(Vulkan REQUIRED)
 
+# VMA
+add_subdirectory(external/vma)
+
 # glfw
 add_subdirectory(external/glfw)
 set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
@@ -28,6 +31,7 @@ target_sources(VulkanMadeEasy
 target_link_libraries(
     VulkanMadeEasy 
     PUBLIC ${Vulkan_LIBRARIES} glfw
+    PRIVATE GPUOpen::VulkanMemoryAllocator
 )
 target_include_directories(VulkanMadeEasy PUBLIC ${Vulkan_INCLUDE_DIRS})
 target_include_directories(VulkanMadeEasy PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
