@@ -1,6 +1,7 @@
 #include "VulkanEngine.h"
 #include <GLFW/glfw3.h>
 #include <stdio.h>
+#include "spdlog/spdlog.h"
 
 namespace vme
 {  
@@ -59,30 +60,31 @@ namespace vme
         glfwSetErrorCallback(
             [](int error, const char* description)
             {
-                fprintf(stderr, "Glfw Error %d: %s\n", error, description);
+				spdlog::error("GLFW error {0}: {1}", error, description);
             }
         );
 		if (!glfwInit())
 			return;
         if (!glfwVulkanSupported())
 		{
-			fprintf(stderr, "GLFW: Vulkan not supported!\n");
+			spdlog::error("GLFW: Vulkan not supported!");
+			// TODO: Error handling
 			return;
 		}
 		// Create Vulkan Instance
 		VkResult result = vkCreateInstance(&instance_info, nullptr, &context_.instance);
 		if (result == VK_ERROR_INCOMPATIBLE_DRIVER)
 		{
-			fprintf(stderr, "Cannot find a compatible Vulkan driver (ICD)");
+			spdlog::error("Cannot find a compatible Vulkan driver (ICD)");
 			abort();
 		}
-		printf("Instance created");
+		spdlog::info("Instance created");
     }
     
     VulkanEngine::~VulkanEngine()
     {
         glfwTerminate();
 		vkDestroyInstance(context_.instance, nullptr);
-		printf("Instance destroyed");
+		spdlog::info("Instance destroyed");
     }
 } // namespace vme

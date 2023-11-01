@@ -7,6 +7,9 @@ project(
 )
 set(CMAKE_CXX_STANDARD 20)
 
+# spdlog
+add_subdirectory(external/spdlog)
+
 # Vulkan
 find_package(Vulkan REQUIRED)
 
@@ -31,6 +34,7 @@ target_sources(VulkanMadeEasy PRIVATE
 target_link_libraries(
     VulkanMadeEasy 
     PUBLIC ${Vulkan_LIBRARIES} glfw GPUOpen::VulkanMemoryAllocator
+    PRIVATE spdlog::spdlog
 )
 target_include_directories(VulkanMadeEasy PUBLIC ${Vulkan_INCLUDE_DIRS})
 target_include_directories(VulkanMadeEasy PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
