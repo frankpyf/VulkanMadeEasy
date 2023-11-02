@@ -1,13 +1,14 @@
-#include <vulkan/vulkan.h>
 #include "vk_mem_alloc.h"
 #include <vector>
 #include <memory>
+#include <unordered_map>
+#include "Window.h"
 
 namespace vme {
     class VulkanEngine
     {
     public:
-        class Builder
+        class InstanceBuilder
         {
         private:
             VkApplicationInfo app_info_{
@@ -19,15 +20,15 @@ namespace vme {
             std::vector<const char*> extensions_{};
             std::vector<const char*> layers_{};
         public:
-            Builder& SetAppName(const char* app_name);
+            InstanceBuilder& SetAppName(const char* app_name);
             // If you don't set api version, the default one will be Vulkan1.3
-            Builder& SetApiVersion(uint8_t major, uint8_t minor);
+            InstanceBuilder& SetApiVersion(uint8_t major, uint8_t minor);
             // All necessary extensions should be included automatically. 
             // Use this function only if you want to add special ones.
-            Builder& AddExtension(const char* extension_name);
-            Builder& AddLayer(const char* layer_name);
+            InstanceBuilder& AddExtension(const char* extension_name);
+            InstanceBuilder& AddLayer(const char* layer_name);
 
-            std::unique_ptr<VulkanEngine> Build();
+            [[nodiscard]] std::unique_ptr<VulkanEngine> Build();
         };
         struct Context
         {
@@ -40,9 +41,22 @@ namespace vme {
     public:
         Context context_;
     private:
+        std::vector<VkPhysicalDevice> gpus_;
 
     public:
         VulkanEngine(VkInstanceCreateInfo);
         ~VulkanEngine();
+
+        // Create logical device, swapchain and all the other necessary components
+        // Make sure you have already set up the environment, e.g. physical device, if needed
+        // you don't need to shutdown the engine manually
+        void Init();
+
+        // Retrieve available gpus, engine will select a default one.
+        const std::vector<VkPhysicalDevice>& GetAvailGpus() { return gpus_; } const
+        // Replace the default gpu
+        void SelectGpu(VkPhysicalDevice new_gpu) { context_.chosen_gpu = new_gpu; }
+    private:
+        void EnumerateGpus();
     };
 }

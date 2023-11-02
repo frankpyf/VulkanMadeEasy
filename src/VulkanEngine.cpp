@@ -5,23 +5,23 @@
 
 namespace vme
 {  
-	VulkanEngine::Builder& VulkanEngine::Builder::SetAppName(const char* name) 
+	VulkanEngine::InstanceBuilder& VulkanEngine::InstanceBuilder::SetAppName(const char* name) 
 	{ 
 		app_info_.pApplicationName = name; 
 		return *this; 
 	}
-    VulkanEngine::Builder& VulkanEngine::Builder::SetApiVersion(uint8_t major, uint8_t minor)
+    VulkanEngine::InstanceBuilder& VulkanEngine::InstanceBuilder::SetApiVersion(uint8_t major, uint8_t minor)
 	{ 
 		app_info_.apiVersion = VK_MAKE_API_VERSION(0, major, minor, 0); 
 		return *this;
 	}
-	VulkanEngine::Builder& VulkanEngine::Builder::AddExtension(const char* extension)
+	VulkanEngine::InstanceBuilder& VulkanEngine::InstanceBuilder::AddExtension(const char* extension)
 	{
 		extensions_.push_back(extension);
 		return *this;
 	}
 
-	std::unique_ptr<VulkanEngine> VulkanEngine::Builder::Build()
+	std::unique_ptr<VulkanEngine> VulkanEngine::InstanceBuilder::Build()
 	{
 		VkInstanceCreateInfo instance_info{.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO};
 		instance_info.pApplicationInfo = &app_info_;
@@ -79,6 +79,8 @@ namespace vme
 			abort();
 		}
 		spdlog::info("Instance created");
+
+		EnumerateGpus();
     }
     
     VulkanEngine::~VulkanEngine()
@@ -87,4 +89,44 @@ namespace vme
 		vkDestroyInstance(context_.instance, nullptr);
 		spdlog::info("Instance destroyed");
     }
+
+	void VulkanEngine::Init()
+	{
+		
+	}
+
+	void VulkanEngine::EnumerateGpus()
+	{
+		 uint32_t gpu_count = 0;
+		VkResult result = vkEnumeratePhysicalDevices(context_.instance, &gpu_count, nullptr);
+		if (result != VK_SUCCESS)
+		{
+			spdlog::error("Failed to enumerate physical devices");
+		}
+		assert(gpu_count > 0 && "No GPU that support Vulkan is found!");
+
+		gpus_.resize(gpu_count);
+		result = vkEnumeratePhysicalDevices(context_.instance, &gpu_count, gpus_.data());
+		if (result != VK_SUCCESS)
+		{
+			spdlog::error("Failed to enumerate physical devices");
+		}
+		std::vector<VkPhysicalDevice> discrete_device{};
+    	auto query_gpu = [&](VkPhysicalDevice gpu){
+        	VkPhysicalDeviceProperties gpu_properties{};
+        	vkGetPhysicalDeviceProperties(gpu, &gpu_properties);
+			if (gpu_properties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU)
+			{
+				discrete_device.push_back(gpu);
+			}
+    	};
+
+   		for(auto& gpu : gpus_)
+    	{
+        	query_gpu(gpu);
+    	}
+
+		context_.chosen_gpu = discrete_device.empty() ? gpus_[0] : discrete_device[0];
+		assert(context_.chosen_gpu != VK_NULL_HANDLE && "No proper device found!");
+	}
 } // namespace vme
