@@ -7,6 +7,11 @@ project(
 )
 set(CMAKE_CXX_STANDARD 20)
 
+if(MSVC)
+    set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
+    set(BUILD_SHARED_LIBS TRUE)
+endif(MSVC)
+
 # spdlog
 add_subdirectory(external/spdlog)
 
@@ -26,17 +31,10 @@ add_library(VulkanMadeEasy SHARED)
 target_sources(VulkanMadeEasy PRIVATE
     include/VulkanEngine.h
     include/Window.h
-    include/Renderer.h
     src/VulkanEngine.cpp
     src/VulkanMemoryAllocator.cpp
     src/Window.cpp
-    src/Renderer.cpp
 )
-
-if(MSVC)
-    set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
-    set(BUILD_SHARED_LIBS TRUE)
-endif()
         
 target_link_libraries(
     VulkanMadeEasy 
