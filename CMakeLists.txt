@@ -26,9 +26,11 @@ add_library(VulkanMadeEasy SHARED)
 target_sources(VulkanMadeEasy PRIVATE
     include/VulkanEngine.h
     include/Window.h
+    include/Renderer.h
     src/VulkanEngine.cpp
     src/VulkanMemoryAllocator.cpp
     src/Window.cpp
+    src/Renderer.cpp
 )
 
 if(MSVC)

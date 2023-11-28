@@ -1,8 +1,9 @@
 #include "vk_mem_alloc.h"
-#include <vector>
-#include <memory>
 #include <unordered_map>
-#include "Window.h"
+#include <string>
+#include <string_view>
+
+#include "Renderer.h"
 
 namespace vme {
     class VulkanEngine
@@ -23,13 +24,27 @@ namespace vme {
             InstanceBuilder& SetAppName(const char* app_name);
             // If you don't set api version, the default one will be Vulkan1.3
             InstanceBuilder& SetApiVersion(uint8_t major, uint8_t minor);
-            // All necessary extensions should be included automatically. 
-            // Use this function only if you want to add special ones.
             InstanceBuilder& AddExtension(const char* extension_name);
             InstanceBuilder& AddLayer(const char* layer_name);
 
-            [[nodiscard]] std::unique_ptr<VulkanEngine> Build();
+            VkResult Build(VulkanEngine&);
         };
+        class DeviceBuilder
+        {
+            VkDeviceCreateInfo create_info_;
+            std::vector<const char*> extensions_{};
+            std::vector<const char*> layers_{};
+        public:
+
+            // TODO: let user set the rule for choosing a gpu
+
+            DeviceBuilder& SelectGpu(VulkanEngine&);
+            DeviceBuilder& AddExtension(const char* extension_name);
+            DeviceBuilder& AddLayer(const char* layer_name);
+
+            VkResult Build(VulkanEngine&);
+        };
+
         struct Context
         {
             VkInstance instance = VK_NULL_HANDLE; // Vulkan library handle
@@ -41,22 +56,23 @@ namespace vme {
     public:
         Context context_;
     private:
-        std::vector<VkPhysicalDevice> gpus_;
 
     public:
-        VulkanEngine(VkInstanceCreateInfo);
+        VulkanEngine();
         ~VulkanEngine();
 
-        // Create logical device, swapchain and all the other necessary components
-        // Make sure you have already set up the environment, e.g. physical device, if needed
-        // you don't need to shutdown the engine manually
-        void Init();
+        VulkanEngine(const VulkanEngine&) = delete;
+        VulkanEngine& operator=(const VulkanEngine&) = delete;
 
-        // Retrieve available gpus, engine will select a default one.
-        const std::vector<VkPhysicalDevice>& GetAvailGpus() { return gpus_; } const
-        // Replace the default gpu
-        void SelectGpu(VkPhysicalDevice new_gpu) { context_.chosen_gpu = new_gpu; }
-    private:
-        void EnumerateGpus();
+        void Run();
+
+        void CreateInstance(InstanceBuilder&);
+        // Default way of building a vulkan instance
+        // User just need to fill in the app name
+        void CreateInstance(const char* app_name);
+
+        void CreateDevice(DeviceBuilder&);
+        // Default way building a vulkan device
+        void CreateDevice();
     };
 }
