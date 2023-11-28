@@ -71,8 +71,12 @@ namespace vme {
         // User just need to fill in the app name
         void CreateInstance(const char* app_name);
 
+
+        /// @brief custom way of building a vulkan device
+        /// @param custom device builder
         void CreateDevice(DeviceBuilder&);
-        // Default way building a vulkan device
+
+        /// @brief Default way building a vulkan device
         void CreateDevice();
     };
 }

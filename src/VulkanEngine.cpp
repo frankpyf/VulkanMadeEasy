@@ -97,8 +97,100 @@ namespace vme
 		layers_.push_back(layer);
 		return *this;
 	}
-	
-	/////////////////////////////////////////////////////////////////////////////////////////////////
+
+    VkResult VulkanEngine::DeviceBuilder::Build(VulkanEngine& engine)
+    {
+		assert(engine.context_.chosen_gpu != VK_NULL_HANDLE && "Select a GPU first");
+		assert(engine.context_.device == VK_NULL_HANDLE && "Logical Device already created");
+		auto gpu = engine.context_.chosen_gpu;
+
+		VkDeviceCreateInfo device_create_info{};
+		device_create_info.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+
+		// extensions related
+		device_create_info.enabledExtensionCount = static_cast<uint32_t>(extensions_.size());
+		device_create_info.ppEnabledExtensionNames = extensions_.empty() ? nullptr : extensions_.data();
+
+		// validation layer
+		device_create_info.enabledLayerCount = static_cast<uint32_t>(layers_.size());
+		device_create_info.ppEnabledLayerNames = layers_.empty()? nullptr : layers_.data();
+
+		// Setup queue info
+		std::vector<VkDeviceQueueCreateInfo> queue_create_info;
+		const float queue_priority[] = { 1.0f };
+		int gfx_queue_family_index = -1;
+		int compute_queue_family_index = -1;
+		int transfer_queue_family_index = -1;
+
+		std::vector<VkQueueFamilyProperties> queue_family_props;
+		uint32_t queue_count;
+		vkGetPhysicalDeviceQueueFamilyProperties(gpu, &queue_count, nullptr);
+		queue_family_props.resize(queue_count);
+		vkGetPhysicalDeviceQueueFamilyProperties(gpu, &queue_count, queue_family_props.data());
+		spdlog::info("Found {0} Queue Families",queue_family_props.size());
+		
+		//select device queue family
+		for (uint32_t family_index = 0; family_index < queue_family_props.size(); ++family_index)
+		{
+			const VkQueueFamilyProperties& curr_props = queue_family_props[family_index];
+			bool is_valid_queue = false;
+			if (curr_props.queueFlags & VK_QUEUE_GRAPHICS_BIT)
+			{
+				if (gfx_queue_family_index == -1)
+				{
+					gfx_queue_family_index = family_index;
+					is_valid_queue = true;
+					spdlog::info("Initializing Gfx Queue with Queue family {0} which has {1} queues", family_index, curr_props.queueCount);
+				}
+			}
+
+			if (curr_props.queueFlags & VK_QUEUE_COMPUTE_BIT)
+			{
+				if (compute_queue_family_index == -1 && gfx_queue_family_index != family_index)
+				{
+					compute_queue_family_index = family_index;
+					is_valid_queue = true;
+					spdlog::info("Initializing Compute Queue with Queue family {0} which has {1} queues", family_index, curr_props.queueCount);
+				}
+			}
+
+			if (curr_props.queueFlags & VK_QUEUE_TRANSFER_BIT)
+			{
+				if (transfer_queue_family_index == -1 &&
+					(curr_props.queueFlags & VK_QUEUE_GRAPHICS_BIT) != VK_QUEUE_GRAPHICS_BIT &&
+					(curr_props.queueFlags & VK_QUEUE_COMPUTE_BIT) != VK_QUEUE_COMPUTE_BIT)
+				{
+					transfer_queue_family_index = family_index;
+					is_valid_queue = true;
+					spdlog::info("Initializing Transfer Queue with Queue family {0} which has {1} queues", family_index, curr_props.queueCount);
+				}
+			}
+			if (!is_valid_queue)
+			{
+				spdlog::warn("Skipping unnecessary Queue Family {0}: {1} queues", family_index, curr_props.queueCount);
+				continue;
+			}
+			int queue_index = queue_create_info.size();
+			queue_create_info.resize(queue_index + 1);
+			VkDeviceQueueCreateInfo& curr_queue = queue_create_info[queue_index];
+			curr_queue.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+			curr_queue.queueFamilyIndex = family_index;
+			//curr_queue.queueCount = curr_props.queueCount;
+			curr_queue.queueCount = 1;
+			curr_queue.pQueuePriorities = queue_priority;
+			
+		}
+
+		device_create_info.queueCreateInfoCount = static_cast<uint32_t>(queue_create_info.size());
+		device_create_info.pQueueCreateInfos = queue_create_info.data();
+
+		//Create the device
+		auto result = vkCreateDevice(gpu, &device_create_info, nullptr, &engine.context_.device);
+
+        return result;
+    }
+
+    /////////////////////////////////////////////////////////////////////////////////////////////////
 
     VulkanEngine::VulkanEngine()
     {
@@ -121,6 +213,11 @@ namespace vme
     VulkanEngine::~VulkanEngine()
     {
         glfwTerminate();
+		if(context_.device != VK_NULL_HANDLE)
+		{
+			vkDestroyDevice(context_.device, nullptr);
+			spdlog::info("Device destroyed");
+		}
 		if(context_.instance != VK_NULL_HANDLE)
 		{
 			vkDestroyInstance(context_.instance, nullptr);
@@ -185,13 +282,12 @@ namespace vme
 	void VulkanEngine::CreateDevice()
 	{
 		assert(context_.device == VK_NULL_HANDLE && "Logical Device already exists");
-		//auto result = DeviceBuilder().AddExtension("VK_KHR_swapchain").Build(*this);
+		auto result = DeviceBuilder().SelectGpu(*this).AddExtension("VK_KHR_swapchain").Build(*this);
 	}
 
 	void VulkanEngine::CreateDevice(DeviceBuilder& builder)
 	{
 		assert(context_.device == VK_NULL_HANDLE);
-
 
 	}
 } // namespace vme
